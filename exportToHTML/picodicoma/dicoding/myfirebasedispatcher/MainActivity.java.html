@@ -1,0 +1,112 @@
+<html>
+<head>
+<title>MainActivity.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #000080; font-weight: bold;}
+.s1 { color: #000000;}
+.s2 { color: #008000; font-weight: bold;}
+.s3 { color: #808080; font-style: italic;}
+.s4 { color: #0000ff;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+MainActivity.java</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span>picodicoma.dicoding.myfirebasedispatcher;
+
+<span class="s0">import </span>android.support.v7.app.AppCompatActivity;
+<span class="s0">import </span>android.os.Bundle;
+<span class="s0">import </span>android.view.View;
+<span class="s0">import </span>android.widget.Button;
+<span class="s0">import </span>android.widget.Toast;
+
+<span class="s0">import </span>com.firebase.jobdispatcher.Constraint;
+<span class="s0">import </span>com.firebase.jobdispatcher.FirebaseJobDispatcher;
+<span class="s0">import </span>com.firebase.jobdispatcher.GooglePlayDriver;
+<span class="s0">import </span>com.firebase.jobdispatcher.Job;
+<span class="s0">import </span>com.firebase.jobdispatcher.Lifetime;
+<span class="s0">import </span>com.firebase.jobdispatcher.RetryStrategy;
+<span class="s0">import </span>com.firebase.jobdispatcher.Trigger;
+
+<span class="s0">public class </span>MainActivity <span class="s0">extends </span>AppCompatActivity <span class="s0">implements </span>View.OnClickListener {
+    Button btnSetScheduler, btnCancelScheduler;
+    FirebaseJobDispatcher mDispatcher;
+
+    @Override
+    <span class="s0">protected void </span>onCreate(Bundle savedInstanceState) {
+        <span class="s0">super</span>.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        btnCancelScheduler = (Button)findViewById(R.id.btn_cancel_scheduler);
+        btnSetScheduler = (Button)findViewById(R.id.btn_set_scheduler);
+        btnSetScheduler.setOnClickListener(<span class="s0">this</span>);
+        btnCancelScheduler.setOnClickListener(<span class="s0">this</span>);
+        mDispatcher = <span class="s0">new </span>FirebaseJobDispatcher(<span class="s0">new </span>GooglePlayDriver(<span class="s0">this</span>));
+    }
+
+    @Override
+    <span class="s0">public void </span>onClick(View v) {
+        <span class="s0">if </span>(v.getId() == R.id.btn_set_scheduler){
+            startDispatcher();
+            Toast.makeText(<span class="s0">this</span>, <span class="s2">&quot;Dispatcher Created&quot;</span>, Toast.LENGTH_SHORT).show();
+        }
+        <span class="s0">if </span>(v.getId() == R.id.btn_cancel_scheduler){
+            cancelDispatcher();
+            Toast.makeText(<span class="s0">this</span>, <span class="s2">&quot;Dispatcher Cancelled&quot;</span>,
+                    Toast.LENGTH_SHORT).show();
+
+        }
+
+    }
+    <span class="s0">private </span>String DISPATCHER_TAG = <span class="s2">&quot;mydispatcher&quot;</span>;
+ <span class="s0">private </span>String CITY = <span class="s2">&quot;Cikarang&quot;</span>;
+
+        <span class="s0">public void </span>startDispatcher() {
+
+        Bundle myExtrasBundle = <span class="s0">new </span>Bundle();
+        myExtrasBundle.putString(MyJobService.EXTRAS_CITY, CITY);
+        Job myJob = mDispatcher.newJobBuilder()
+        <span class="s3">// kelas service yang akan dipanggil</span>
+        .setService(MyJobService.<span class="s0">class</span>)
+        <span class="s3">// unique tag untuk identifikasi job</span>
+        .setTag(DISPATCHER_TAG)
+        <span class="s3">// one-off job</span>
+        // true job tersebut akan diulang, dan false job tersebut tidak diulang
+        .setRecurring(<span class="s0">true</span>)
+        <span class="s3">// until_next_boot berarti hanya sampai next boot</span>
+        // forever berarti akan berjalan meskipun sudah reboot
+        .setLifetime(Lifetime.UNTIL_NEXT_BOOT)
+        <span class="s3">// waktu trigger 0 sampai 60 detik</span>
+        .setTrigger(Trigger.executionWindow(<span class="s4">0</span>, <span class="s4">60</span>))
+            <span class="s3">// overwrite job dengan tag sama</span>
+            .setReplaceCurrent(<span class="s0">true</span>)
+            <span class="s3">// set waktu kapan akan dijalankan lagi jika gagal</span>
+            .setRetryStrategy(RetryStrategy.DEFAULT_EXPONENTIAL)
+            <span class="s3">// set kondisi dari device</span>
+            .setConstraints(
+                    <span class="s3">// hanya berjalan saat ada koneksi yang unmetered (contoh Wifi)</span>
+            Constraint.ON_UNMETERED_NETWORK,
+                    <span class="s3">// hanya berjalan ketika device di charge</span>
+            Constraint.DEVICE_CHARGING
+            <span class="s3">// berjalan saat ada koneksi internet</span>
+            //Constraint.ON_ANY_NETWORK
+
+            // berjalan saat device dalam kondisi idle
+            //Constraint.DEVICE_IDLE
+            )
+            .setExtras(myExtrasBundle)
+            .build();
+
+            mDispatcher.mustSchedule(myJob);
+             }
+             <span class="s0">public void </span>cancelDispatcher(){
+
+                 mDispatcher.cancel(DISPATCHER_TAG);
+             }
+}
+</pre>
+</body>
+</html>
